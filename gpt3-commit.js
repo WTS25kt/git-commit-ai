@@ -34,8 +34,9 @@ async function generateCommitMessage(diff) {
   });
 
   const message = response.choices[0].message.content.trim();
-  const [summary, ...descriptionLines] = message.split('\n').map(line => line.trim());
-  const description = descriptionLines.join('\n');
+  const [summaryLine, ...descriptionLines] = message.split('\n').map(line => line.trim());
+  const summary = summaryLine.replace('概要（Summary）:', '').trim();
+  const description = descriptionLines.join('\n').replace('詳細（Description）:', '').trim();
 
   return { summary, description };
 }
@@ -52,7 +53,7 @@ async function main() {
     const confirm = await prompts({
       type: 'confirm',
       name: 'value',
-      message: `提案されたコミットメッセージ:\n概要（Summary）:\n${summary}\n\n詳細（Description）:\n${description}\nこのメッセージを使用しますか？`,
+      message: `提案されたコミットメッセージ:\n${summary}\n\n${description}\nこのメッセージを使用しますか？`,
       initial: true,
     });
 
