@@ -23,9 +23,9 @@ async function getGitDiff() {
 }
 
 async function generateCommitMessage(diff) {
-  const prompt = `以下の変更内容に基づいてGitのコミットメッセージを生成してください:\n\n${diff}\n\nコミットメッセージ:`;
+  const prompt = `以下の変更内容に基づいて、Gitのコミットメッセージの概要（Summary）と詳細（Description）を日本語で生成してください。\n\n変更内容:\n${diff}\n\n概要（Summary）:\n詳細（Description）:`;
   const response = await openai.chat.completions.create({
-    model: 'gpt-4o-mini', // モデルをGPT-4o Miniに変更
+    model: 'gpt-4o-mini',
     messages: [
       { role: 'system', content: 'You are a helpful assistant.' },
       { role: 'user', content: prompt }
@@ -47,7 +47,7 @@ async function main() {
     const confirm = await prompts({
       type: 'confirm',
       name: 'value',
-      message: `提案されたコミットメッセージ: "${message}"。このメッセージを使用しますか？`,
+      message: `提案されたコミットメッセージ:\n${message}\nこのメッセージを使用しますか？`,
       initial: true,
     });
 
