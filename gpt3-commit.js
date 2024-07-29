@@ -1,14 +1,15 @@
 #!/usr/bin/env node
 
-const { Configuration, OpenAIApi } = require('openai');
-const prompts = require('prompts');
-const { exec } = require('child_process');
-require('dotenv').config();
+import OpenAI from 'openai';
+import prompts from 'prompts';
+import { exec } from 'child_process';
+import dotenv from 'dotenv';
 
-const configuration = new Configuration({
+dotenv.config();
+
+const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
-const openai = new OpenAIApi(configuration);
 
 async function getGitDiff() {
   return new Promise((resolve, reject) => {
@@ -23,12 +24,15 @@ async function getGitDiff() {
 
 async function generateCommitMessage(diff) {
   const prompt = `以下の変更内容に基づいてGitのコミットメッセージを生成してください:\n\n${diff}\n\nコミットメッセージ:`;
-  const response = await openai.createCompletion({
-    model: 'text-davinci-003',
-    prompt: prompt,
+  const response = await openai.chat.completions.create({
+    model: 'gpt-4o-mini', // モデルをGPT-4o Miniに変更
+    messages: [
+      { role: 'system', content: 'You are a helpful assistant.' },
+      { role: 'user', content: prompt }
+    ],
     max_tokens: 150,
   });
-  return response.data.choices[0].text.trim();
+  return response.choices[0].message.content.trim();
 }
 
 async function main() {
