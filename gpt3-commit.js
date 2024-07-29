@@ -32,7 +32,12 @@ async function generateCommitMessage(diff) {
     ],
     max_tokens: 150,
   });
-  return response.choices[0].message.content.trim();
+
+  const message = response.choices[0].message.content.trim();
+  const [summary, ...descriptionLines] = message.split('\n').map(line => line.trim());
+  const description = descriptionLines.join('\n');
+
+  return { summary, description };
 }
 
 async function main() {
@@ -43,16 +48,17 @@ async function main() {
       return;
     }
 
-    const message = await generateCommitMessage(diff);
+    const { summary, description } = await generateCommitMessage(diff);
     const confirm = await prompts({
       type: 'confirm',
       name: 'value',
-      message: `提案されたコミットメッセージ:\n${message}\nこのメッセージを使用しますか？`,
+      message: `提案されたコミットメッセージ:\n概要（Summary）:\n${summary}\n\n詳細（Description）:\n${description}\nこのメッセージを使用しますか？`,
       initial: true,
     });
 
     if (confirm.value) {
-      exec(`git commit -m "${message}"`, (error) => {
+      const commitMessage = `${summary}\n\n${description}`;
+      exec(`git commit -m "${commitMessage}"`, (error) => {
         if (error) {
           console.error('コミットエラー:', error);
         } else {
