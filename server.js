@@ -1,9 +1,9 @@
 // server.js
 
-const express = require('express');
-const OpenAI = require('openai');
-const { exec } = require('child_process');
-const dotenv = require('dotenv');
+import express from 'express';
+import OpenAI from 'openai';
+import { exec } from 'child_process';
+import dotenv from 'dotenv';
 
 dotenv.config();
 
