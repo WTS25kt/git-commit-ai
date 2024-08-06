@@ -64,25 +64,27 @@ app.post('/generate-commit-message', async (req, res) => {
 });
 
 app.post('/commit-changes', async (req, res) => {
-    try {
-      const { summary, description } = req.body;
-  
-      if (!summary.trim() || !description.trim()) {
-        return res.status(400).json({ error: 'コミットメッセージが不足しています。' });
-      }
-  
-      const commitMessage = `${summary}\n\n${description}`;
-      exec(`git commit -m "${commitMessage}"`, (error, stdout, stderr) => {
-        if (error) {
-          return res.status(500).json({ error: `コミットエラー: ${stderr}` });
-        }
-        res.json({ message: 'コミットが成功しました。', output: stdout });
-      });
-    } catch (error) {
-      console.error('Error processing /commit-changes:', error);
-      res.status(500).json({ error: '内部サーバーエラーが発生しました。' });
+  try {
+    const { summary, description } = req.body;
+    console.log('Received summary:', summary);  // デバッグ用ログ
+    console.log('Received description:', description);  // デバッグ用ログ
+
+    if (!summary.trim() || !description.trim()) {
+      return res.status(400).json({ error: 'コミットメッセージが不足しています。' });
     }
-  });
+
+    const commitMessage = `${summary}\n\n${description}`;
+    exec(`git commit -m "${commitMessage}"`, (error, stdout, stderr) => {
+      if (error) {
+        return res.status(500).json({ error: `コミットエラー: ${stderr}` });
+      }
+      res.json({ message: 'コミットが成功しました。', output: stdout });
+    });
+  } catch (error) {
+    console.error('Error processing /commit-changes:', error);
+    res.status(500).json({ error: '内部サーバーエラーが発生しました。' });
+  }
+});
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {

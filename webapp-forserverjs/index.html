@@ -24,35 +24,30 @@
         alert('エラーが発生しました: ' + error.message);
       }
     }
-
+  
     async function commitChanges() {
-  try {
-    const summary = document.getElementById('summary').textContent.trim();
-    const description = document.getElementById('description').textContent.trim();
-
-    if (!summary || !description) {
-      alert('概要または詳細が不足しています。');
-      return;
+      try {
+        const summary = document.getElementById('summary').textContent.trim();
+        const description = document.getElementById('description').textContent.trim();
+  
+        const response = await fetch('/commit-changes', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ summary, description })
+        });
+        const data = await response.json();
+        if (response.ok) {
+          alert(data.message);
+        } else {
+          alert(data.error);
+        }
+      } catch (error) {
+        alert('エラーが発生しました: ' + error.message);
+      }
     }
-
-    const response = await fetch('/commit-changes', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ summary, description })
-    });
-    const data = await response.json();
-    if (response.ok) {
-      alert(data.message);
-    } else {
-      alert(data.error);
-    }
-  } catch (error) {
-    alert('エラーが発生しました: ' + error.message);
-  }
-}
-  </script>
+  </script>  
 </head>
 <body>
   <h1>Commit Message Generator</h1>
