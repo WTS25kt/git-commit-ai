@@ -25,7 +25,7 @@ async function getGitDiff() {
 }
 
 async function generateCommitMessage(diff) {
-  const prompt = `以下の変更内容に基づいて、Gitのコミットメッセージの概要（Summary）と詳細（Description）を日本語で生成してください。\n\n変更内容:\n${diff}\n\n概要（Summary）:\n詳細（Description）:`;
+  const prompt = `以下の変更内容に基づいて、Gitのコミットメッセージを日本語で生成してください。\n\n変更内容:\n${diff}\n\n### 概要（Summary）\n以下に概要を記載してください:\n### 詳細（Description）\n以下に詳細を記載してください:`;
   const response = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
     messages: [
@@ -41,11 +41,10 @@ async function generateCommitMessage(diff) {
   const message = response.choices[0].message.content.trim();
   console.log('Generated Message:', message);
 
-  const [summaryLine, ...descriptionLines] = message.split('\n').map(line => line.trim());
-  const summary = summaryLine.replace('概要（Summary）:', '').trim();
-  const description = descriptionLines.join('\n').replace('詳細（Description）:', '').trim();
-
-  return { summary, description };
+  // "### 概要（Summary）" と "### 詳細（Description）" で分割する
+  const [_, summaryContent, descriptionContent] = message.split(/### 概要（Summary）|### 詳細（Description）/).map(line => line.trim());
+  
+  return { summary: summaryContent, description: descriptionContent };
 }
 
 app.post('/generate-commit-message', async (req, res) => {
