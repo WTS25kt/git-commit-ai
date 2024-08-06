@@ -1,4 +1,4 @@
-#　Terminal　App(gpt3-commit.js)
+# Terminal　App(gpt3-commit.js)
 ## Usage
 ### 事前確認
 #### ソースコードの修正とgit addを実行（変更内容をステージングエリアに移動）が完了していることを確認
