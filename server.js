@@ -42,17 +42,20 @@ async function generateCommitMessage(diff) {
 
   // "### 概要（Summary）" と "### 詳細（Description）" で分割する
   const summaryIndex = message.indexOf("### 概要（Summary）");
-  const descriptionIndex = message.indexOf("### 詳細（Description）");
+const descriptionIndex = message.indexOf("### 詳細（Description）");
 
-  if (summaryIndex === -1 || descriptionIndex === -1) {
-    console.error("Failed to find summary or description in the message");
-    return { summary: "", description: "" };
-  }
+if (summaryIndex === -1 || descriptionIndex === -1) {
+  console.error("Failed to find summary or description in the message");
+  return { summary: "", description: "" };
+}
 
-  const summaryContent = message.slice(summaryIndex + "### 概要（Summary）".length, descriptionIndex).trim();
-  const descriptionContent = message.slice(descriptionIndex + "### 詳細（Description）".length).trim();
+const summaryContent = message.slice(summaryIndex + "### 概要（Summary）".length, descriptionIndex).trim();
+const descriptionContent = message.slice(descriptionIndex + "### 詳細（Description）".length).trim();
 
-  return { summary: summaryContent, description: descriptionContent };
+// 改行文字で分割してリスト項目を保持
+const descriptionLines = descriptionContent.split('\n').map(line => line.trim());
+
+return { summary: summaryContent, description: descriptionLines.join('\n') };
 }
 
 app.post('/generate-commit-message', async (req, res) => {
