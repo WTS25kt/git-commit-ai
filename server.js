@@ -1,14 +1,21 @@
-// server.js
-
 import express from 'express';
 import OpenAI from 'openai';
 import { exec } from 'child_process';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 dotenv.config();
 
 const app = express();
 app.use(express.json());
+
+// __dirname の代わりに使うための設定（ESモジュールで__dirnameが使えないため）
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// 静的ファイルを提供するディレクトリを設定
+app.use(express.static(path.join(__dirname, 'webapp-forserverjs')));
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
