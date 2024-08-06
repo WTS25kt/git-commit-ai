@@ -35,15 +35,23 @@ async function generateCommitMessage(diff) {
     max_tokens: 150,
   });
 
-  // レスポンス全体をログ出力
   console.log('API Response:', response);
 
   const message = response.choices[0].message.content.trim();
   console.log('Generated Message:', message);
 
   // "### 概要（Summary）" と "### 詳細（Description）" で分割する
-  const [_, summaryContent, descriptionContent] = message.split(/### 概要（Summary）|### 詳細（Description）/).map(line => line.trim());
-  
+  const summaryIndex = message.indexOf("### 概要（Summary）");
+  const descriptionIndex = message.indexOf("### 詳細（Description）");
+
+  if (summaryIndex === -1 || descriptionIndex === -1) {
+    console.error("Failed to find summary or description in the message");
+    return { summary: "", description: "" };
+  }
+
+  const summaryContent = message.slice(summaryIndex + "### 概要（Summary）".length, descriptionIndex).trim();
+  const descriptionContent = message.slice(descriptionIndex + "### 詳細（Description）".length).trim();
+
   return { summary: summaryContent, description: descriptionContent };
 }
 
