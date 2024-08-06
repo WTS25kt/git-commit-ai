@@ -2,20 +2,12 @@ import express from 'express';
 import OpenAI from 'openai';
 import { exec } from 'child_process';
 import dotenv from 'dotenv';
-import path from 'path';
-import { fileURLToPath } from 'url';
 
 dotenv.config();
 
 const app = express();
 app.use(express.json());
-
-// __dirname の代わりに使うための設定（ESモジュールで__dirnameが使えないため）
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// 静的ファイルを提供するディレクトリを設定
-app.use(express.static(path.join(__dirname, 'webapp-forserverjs')));
+app.use(express.static('webapp-forserverjs'));
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -63,6 +55,22 @@ app.post('/generate-commit-message', async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
+});
+
+app.post('/commit-changes', async (req, res) => {
+  const { summary, description } = req.body;
+
+  if (!summary || !description) {
+    return res.status(400).json({ error: 'コミットメッセージが不足しています。' });
+  }
+
+  const commitMessage = `${summary}\n\n${description}`;
+  exec(`git commit -m "${commitMessage}"`, (error, stdout, stderr) => {
+    if (error) {
+      return res.status(500).json({ error: `コミットエラー: ${stderr}` });
+    }
+    res.json({ message: 'コミットが成功しました。', output: stdout });
+  });
 });
 
 const port = process.env.PORT || 3000;
