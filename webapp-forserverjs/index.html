@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Commit Message Generator</title>
+  <script>
+    async function generateCommitMessage() {
+      try {
+        const response = await fetch('/generate-commit-message', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        const data = await response.json();
+        if (response.ok) {
+          document.getElementById('summary').innerText = data.summary;
+          document.getElementById('description').innerText = data.description;
+        } else {
+          alert(data.error);
+        }
+      } catch (error) {
+        alert('エラーが発生しました: ' + error.message);
+      }
+    }
+  
+    async function commitChanges() {
+      try {
+        const summary = document.getElementById('summary').textContent.trim();
+        const description = document.getElementById('description').textContent.trim();
+  
+        const response = await fetch('/commit-changes', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ summary, description })
+        });
+        const data = await response.json();
+        if (response.ok) {
+          alert(data.message);
+        } else {
+          alert(data.error);
+        }
+      } catch (error) {
+        alert('エラーが発生しました: ' + error.message);
+      }
+    }
+  </script>  
+</head>
+<body>
+  <h1>Commit Message Generator</h1>
+  <button onclick="generateCommitMessage()">Generate Commit Message</button>
+  <button onclick="commitChanges()">コミットする</button>
+  <h2>概要（Summary）:</h2>
+  <p id="summary"></p>
+  <h2>詳細（Description）:</h2>
+  <p id="description"></p>
+</body>
+</html>
