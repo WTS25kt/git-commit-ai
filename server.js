@@ -25,23 +25,29 @@ async function getGitDiff() {
 }
 
 async function generateCommitMessage(diff) {
-  const prompt = `以下の変更内容に基づいて、Gitのコミットメッセージの概要（Summary）と詳細（Description）を日本語で生成してください。\n\n変更内容:\n${diff}\n\n概要（Summary）:\n詳細（Description）:`;
-  const response = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
-    messages: [
-      { role: 'system', content: 'You are a helpful assistant.' },
-      { role: 'user', content: prompt }
-    ],
-    max_tokens: 150,
-  });
-
-  const message = response.choices[0].message.content.trim();
-  const [summaryLine, ...descriptionLines] = message.split('\n').map(line => line.trim());
-  const summary = summaryLine.replace('概要（Summary）:', '').trim();
-  const description = descriptionLines.join('\n').replace('詳細（Description）:', '').trim();
-
-  return { summary, description };
-}
+    const prompt = `以下の変更内容に基づいて、Gitのコミットメッセージの概要（Summary）と詳細（Description）を日本語で生成してください。\n\n変更内容:\n${diff}\n\n概要（Summary）:\n詳細（Description）:`;
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: 'You are a helpful assistant.' },
+        { role: 'user', content: prompt }
+      ],
+      max_tokens: 150,
+    });
+  
+    // レスポンス全体をログ出力
+    console.log('API Response:', response);
+  
+    const message = response.choices[0].message.content.trim();
+    console.log('Generated Message:', message); // 生成されたメッセージの内容をログ出力
+  
+    const [summaryLine, ...descriptionLines] = message.split('\n').map(line => line.trim());
+    const summary = summaryLine.replace('概要（Summary）:', '').trim();
+    const description = descriptionLines.join('\n').replace('詳細（Description）:', '').trim();
+  
+    return { summary, description };
+  }
+  
 
 app.post('/generate-commit-message', async (req, res) => {
   try {
@@ -58,20 +64,25 @@ app.post('/generate-commit-message', async (req, res) => {
 });
 
 app.post('/commit-changes', async (req, res) => {
-  const { summary, description } = req.body;
-
-  if (!summary || !description) {
-    return res.status(400).json({ error: 'コミットメッセージが不足しています。' });
-  }
-
-  const commitMessage = `${summary}\n\n${description}`;
-  exec(`git commit -m "${commitMessage}"`, (error, stdout, stderr) => {
-    if (error) {
-      return res.status(500).json({ error: `コミットエラー: ${stderr}` });
+    try {
+      const { summary, description } = req.body;
+  
+      if (!summary.trim() || !description.trim()) {
+        return res.status(400).json({ error: 'コミットメッセージが不足しています。' });
+      }
+  
+      const commitMessage = `${summary}\n\n${description}`;
+      exec(`git commit -m "${commitMessage}"`, (error, stdout, stderr) => {
+        if (error) {
+          return res.status(500).json({ error: `コミットエラー: ${stderr}` });
+        }
+        res.json({ message: 'コミットが成功しました。', output: stdout });
+      });
+    } catch (error) {
+      console.error('Error processing /commit-changes:', error);
+      res.status(500).json({ error: '内部サーバーエラーが発生しました。' });
     }
-    res.json({ message: 'コミットが成功しました。', output: stdout });
   });
-});
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
