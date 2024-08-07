@@ -13,14 +13,14 @@ const app = express();
 const PORT = 3000;
 
 // 静的ファイルの提供
-app.use(express.static(path.join(__dirname, 'webapp-forserverjs')));
+app.use(express.static(path.join(__dirname, 'button-part')));
 
 // JSONボディの解析
 app.use(express.json());
 
 // ルートハンドリング
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'webapp-forserverjs', 'gitstagebuttonpart'));
+    res.sendFile(path.join(__dirname, 'button-part', 'gitstagebuttonpart'));
 });
 
 // Gitステージングのエンドポイント
