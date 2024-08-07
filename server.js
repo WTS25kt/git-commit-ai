@@ -59,8 +59,6 @@ async function generateCommitMessage(diff) {
 
   // 改行文字で分割してリスト項目を保持
   const descriptionLines = descriptionContent.split('\n').map(line => line.trim());
-  // デバッグログでリストごとに改行されていることが確認できた。この行を入れたことで、バグが起きた可能性がありコメントアウト
-  // console.log('リストごとに改行されているか確認:', descriptionLines);  // デバッグ用ログ
 
   return { summary: summaryContent, description: descriptionLines.join('\n') };
 }
@@ -82,10 +80,6 @@ app.post('/generate-commit-message', async (req, res) => {
 app.post('/commit-changes', async (req, res) => {
   try {
     const { summary, description } = req.body;
-    // console.log('Received summary:', summary);  // デバッグ用ログ
-    // console.log('Received description:', description);  // デバッグ用ログ
-
-    // summary と description のチェックを削除
 
     const commitMessage = `${summary}\n\n${description}`;
     exec(`git commit -m "${commitMessage}"`, (error, stdout, stderr) => {
