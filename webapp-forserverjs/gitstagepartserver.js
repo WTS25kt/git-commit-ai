@@ -20,7 +20,7 @@ app.use(express.json());
 
 // ルートハンドリング
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'button-part', 'gitstagebuttonpart'));
+    res.sendFile(path.join(__dirname, 'button-part', 'gitstagebuttonpart.html'));
 });
 
 // Gitステージングのエンドポイント
