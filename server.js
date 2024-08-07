@@ -42,20 +42,25 @@ async function generateCommitMessage(diff) {
 
   // "### 概要（Summary）" と "### 詳細（Description）" で分割する
   const summaryIndex = message.indexOf("### 概要（Summary）");
-const descriptionIndex = message.indexOf("### 詳細（Description）");
+  const descriptionIndex = message.indexOf("### 詳細（Description）");
 
-if (summaryIndex === -1 || descriptionIndex === -1) {
-  console.error("Failed to find summary or description in the message");
-  return { summary: "", description: "" };
-}
+  let summaryContent = "";
+  let descriptionContent = "";
 
-const summaryContent = message.slice(summaryIndex + "### 概要（Summary）".length, descriptionIndex).trim();
-const descriptionContent = message.slice(descriptionIndex + "### 詳細（Description）".length).trim();
+  if (summaryIndex !== -1 && descriptionIndex !== -1) {
+    // フォーマットが期待通りの場合
+    summaryContent = message.slice(summaryIndex + "### 概要（Summary）".length, descriptionIndex).trim();
+    descriptionContent = message.slice(descriptionIndex + "### 詳細（Description）".length).trim();
+  } else {
+    // フォーマットが期待通りでない場合、応急処置として全体をサマリーにする
+    summaryContent = message;
+    console.error("Failed to find summary or description in the message. Using the entire message as the summary.");
+  }
 
-// 改行文字で分割してリスト項目を保持
-const descriptionLines = descriptionContent.split('\n').map(line => line.trim());
+  // 改行文字で分割してリスト項目を保持
+  const descriptionLines = descriptionContent.split('\n').map(line => line.trim());
 
-return { summary: summaryContent, description: descriptionLines.join('\n') };
+  return { summary: summaryContent, description: descriptionLines.join('\n') };
 }
 
 app.post('/generate-commit-message', async (req, res) => {
@@ -75,10 +80,6 @@ app.post('/generate-commit-message', async (req, res) => {
 app.post('/commit-changes', async (req, res) => {
   try {
     const { summary, description } = req.body;
-    console.log('Received summary:', summary);  // デバッグ用ログ
-    console.log('Received description:', description);  // デバッグ用ログ
-
-    // summary と description のチェックを削除
 
     const commitMessage = `${summary}\n\n${description}`;
     exec(`git commit -m "${commitMessage}"`, (error, stdout, stderr) => {
