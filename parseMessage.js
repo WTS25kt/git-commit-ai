@@ -11,7 +11,6 @@ export function parseCommitMessage(message) {
     } else {
       summaryContent = "コミットメッセージのフォーマットが期待通りでないため、詳細（Description）を参照してください。";
       descriptionContent = message;
-      console.error("Failed to find summary or description in the message. Using the entire message as the description.");
     }
   
     const descriptionLines = descriptionContent.split('\n').map(line => line.trim()).filter(line => line);
