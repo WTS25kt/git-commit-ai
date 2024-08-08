@@ -9,6 +9,9 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// リポジトリのルートディレクトリを指定
+const repoRoot = path.resolve(__dirname, '..');
+
 const app = express();
 const PORT = 3000;
 
@@ -25,20 +28,31 @@ app.get('/', (req, res) => {
 
 // Gitステージングのエンドポイント
 app.post('/stage', (req, res) => {
-    const { folderPath } = req.body;
+    const { filePaths } = req.body;
 
-    // コマンドインジェクション対策: 入力のバリデーション
-    if (typeof folderPath !== 'string' || !folderPath.match(/^[a-zA-Z0-9_\-/]+$/)) {
-        return res.status(400).json({ message: '無効なフォルダパスです。' });
+    if (!Array.isArray(filePaths)) {
+        return res.status(400).json({ message: '無効なデータ形式です。' });
     }
 
-    const absolutePath = path.resolve(__dirname, folderPath);
+    // ログ出力: 送信されたファイルパスを確認
+    console.log('Received file paths:', filePaths);
+
+    const resolvedPaths = filePaths.map(fp => path.resolve(repoRoot, fp));
+    
+    // コマンドインジェクション対策: パスの検証
+    for (const rp of resolvedPaths) {
+        if (!rp.startsWith(repoRoot)) {
+            return res.status(400).json({ message: '無効なフォルダパスです。' });
+        }
+    }
+
+    const command = `git add ${resolvedPaths.join(' ')}`;
 
     // Git add コマンドの実行
-    exec(`git add ${absolutePath}`, (error, stdout, stderr) => {
+    exec(command, { cwd: repoRoot }, (error, stdout, stderr) => {
         if (error) {
             console.error(`エラー: ${stderr}`);
-            return res.status(500).json({ message: `エラーが発生しました: ${stderr}` });
+            return res.status(500).json({ message: 'エラーが発生しました' });
         }
         res.json({ message: 'ステージングが成功しました' });
     });
