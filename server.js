@@ -81,7 +81,8 @@ app.get('/projects', (req, res) => {
 app.post('/generate-commit-message', async (req, res) => {
   try {
     const { projectPath } = req.body;
-    const diff = await getGitDiff(projectPath);
+    const fullProjectPath = path.join(devDir, projectPath);
+    const diff = await getGitDiff(fullProjectPath);
     if (!diff) {
       return res.status(400).json({ error: 'ステージングエリアに変更がありません。' });
     }
@@ -96,9 +97,10 @@ app.post('/generate-commit-message', async (req, res) => {
 app.post('/commit-changes', async (req, res) => {
   try {
     const { projectPath, summary, description } = req.body;
+    const fullProjectPath = path.join(devDir, projectPath);
 
     const commitMessage = `${summary}\n\n${description}`;
-    exec(`git -C ${projectPath} commit -m "${commitMessage}"`, (error, stdout, stderr) => {
+    exec(`git -C ${fullProjectPath} commit -m "${commitMessage}"`, (error, stdout, stderr) => {
       if (error) {
         return res.status(500).json({ error: `コミットエラー: ${stderr}` });
       }
