@@ -13,9 +13,9 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-async function getGitDiff() {
+async function getGitDiff(projectPath) {
   return new Promise((resolve, reject) => {
-    exec('git diff --cached', (error, stdout) => {
+    exec(`git -C ${projectPath} diff --cached`, (error, stdout) => {
       if (error) {
         return reject(error);
       }
@@ -40,7 +40,6 @@ async function generateCommitMessage(diff) {
   const message = response.choices[0].message.content.trim();
   console.log('Generated Message:', message);
 
-  // "### 概要（Summary）" と "### 詳細（Description）" で分割する
   const summaryIndex = message.indexOf("### 概要（Summary）");
   const descriptionIndex = message.indexOf("### 詳細（Description）");
 
@@ -65,7 +64,8 @@ async function generateCommitMessage(diff) {
 
 app.post('/generate-commit-message', async (req, res) => {
   try {
-    const diff = await getGitDiff();
+    const { projectPath } = req.body;
+    const diff = await getGitDiff(projectPath);
     if (!diff) {
       return res.status(400).json({ error: 'ステージングエリアに変更がありません。' });
     }
@@ -79,10 +79,10 @@ app.post('/generate-commit-message', async (req, res) => {
 
 app.post('/commit-changes', async (req, res) => {
   try {
-    const { summary, description } = req.body;
+    const { projectPath, summary, description } = req.body;
 
     const commitMessage = `${summary}\n\n${description}`;
-    exec(`git commit -m "${commitMessage}"`, (error, stdout, stderr) => {
+    exec(`git -C ${projectPath} commit -m "${commitMessage}"`, (error, stdout, stderr) => {
       if (error) {
         return res.status(500).json({ error: `コミットエラー: ${stderr}` });
       }

@@ -6,12 +6,14 @@
   <title>Commit Message Generator</title>
   <script>
     async function generateCommitMessage() {
+      const projectPath = document.getElementById('projectPath').value.trim();
       try {
         const response = await fetch('/generate-commit-message', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
-          }
+          },
+          body: JSON.stringify({ projectPath })
         });
         const data = await response.json();
         if (response.ok) {
@@ -26,6 +28,7 @@
     }
   
     async function commitChanges() {
+      const projectPath = document.getElementById('projectPath').value.trim();
       try {
         const summary = document.getElementById('summary').textContent.trim();
         const description = document.getElementById('description').textContent.trim();
@@ -35,7 +38,7 @@
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ summary, description })
+          body: JSON.stringify({ projectPath, summary, description })
         });
         const data = await response.json();
         if (response.ok) {
@@ -51,6 +54,8 @@
 </head>
 <body>
   <h1>Commit Message Generator</h1>
+  <label for="projectPath">プロジェクトパス:</label>
+  <input type="text" id="projectPath" placeholder="/Users/shigoto/仕事/GitHub" />
   <button onclick="generateCommitMessage()">Generate Commit Message</button>
   <button onclick="commitChanges()">コミットする</button>
   <h2>概要（Summary）:</h2>
