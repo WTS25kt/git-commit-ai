@@ -1,36 +1,79 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Git Add</title>
+    <title>Git Project Manager</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        select, button { margin-top: 10px; }
+        .file-list { margin-top: 20px; }
+    </style>
 </head>
 <body>
-    <h1>フォルダを選択してGitステージングを行う</h1>
-    <input type="file" id="folderInput" webkitdirectory directory multiple>
-    <button id="stageButton">ステージング</button>
+    <h1>Git Project Manager</h1>
+    <label for="projectSelect">プロジェクトを選択:</label>
+    <select id="projectSelect">
+        <option value="">プロジェクトを選択してください</option>
+    </select>
+    
+    <div class="file-list" id="fileList"></div>
+    
+    <button id="stageButton" disabled>ステージングを実行</button>
 
     <script>
-        document.getElementById('stageButton').addEventListener('click', async () => {
-            const files = document.getElementById('folderInput').files;
-            if (files.length === 0) {
-                alert('フォルダを選択してください');
-                return;
-            }
-
-            // ファイルパスのリストを作成
-            const filePaths = Array.from(files).map(file => file.webkitRelativePath);
-
-            const response = await fetch('/stage', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ filePaths })
+        document.addEventListener('DOMContentLoaded', async () => {
+            // プロジェクト一覧を取得してプルダウンメニューを作成
+            const projectSelect = document.getElementById('projectSelect');
+            const response = await fetch('/projects');
+            const data = await response.json();
+            data.projects.forEach(project => {
+                const option = document.createElement('option');
+                option.value = project;
+                option.textContent = project;
+                projectSelect.appendChild(option);
             });
 
-            const result = await response.json();
-            alert(result.message);
+            // プロジェクトが選択されたら、git status情報を取得
+            projectSelect.addEventListener('change', async () => {
+                const project = projectSelect.value;
+                if (!project) return;
+
+                const fileListDiv = document.getElementById('fileList');
+                fileListDiv.innerHTML = ''; // 既存のリストをクリア
+
+                const statusResponse = await fetch(`/status/${project}`);
+                const statusData = await statusResponse.json();
+
+                statusData.statusList.forEach(file => {
+                    const label = document.createElement('label');
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.value = file;
+                    label.appendChild(checkbox);
+                    label.appendChild(document.createTextNode(file));
+                    fileListDiv.appendChild(label);
+                    fileListDiv.appendChild(document.createElement('br'));
+                });
+
+                document.getElementById('stageButton').disabled = false;
+            });
+
+            // ステージングボタンが押されたら、選択されたファイルをステージング
+            document.getElementById('stageButton').addEventListener('click', async () => {
+                const project = projectSelect.value;
+                const checkboxes = document.querySelectorAll('#fileList input[type="checkbox"]:checked');
+                const filePaths = Array.from(checkboxes).map(cb => cb.value);
+
+                const response = await fetch('/stage', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ project, filePaths })
+                });
+
+                const result = await response.json();
+                alert(result.message);
+            });
         });
     </script>
 </body>
