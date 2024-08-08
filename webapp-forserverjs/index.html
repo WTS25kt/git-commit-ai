@@ -5,8 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Commit Message Generator</title>
   <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      // プロジェクト一覧を取得してプルダウンメニューを作成
+      const projectSelect = document.getElementById('projectSelect');
+      const response = await fetch('/projects');
+      const data = await response.json();
+      data.projects.forEach(project => {
+        const option = document.createElement('option');
+        option.value = project;
+        option.textContent = project;
+        projectSelect.appendChild(option);
+      });
+    });
+
     async function generateCommitMessage() {
-      const projectPath = document.getElementById('projectPath').value.trim();
+      const projectPath = document.getElementById('projectSelect').value.trim();
       try {
         const response = await fetch('/generate-commit-message', {
           method: 'POST',
@@ -26,13 +39,13 @@
         alert('エラーが発生しました: ' + error.message);
       }
     }
-  
+
     async function commitChanges() {
-      const projectPath = document.getElementById('projectPath').value.trim();
+      const projectPath = document.getElementById('projectSelect').value.trim();
       try {
         const summary = document.getElementById('summary').textContent.trim();
         const description = document.getElementById('description').textContent.trim();
-  
+
         const response = await fetch('/commit-changes', {
           method: 'POST',
           headers: {
@@ -50,12 +63,14 @@
         alert('エラーが発生しました: ' + error.message);
       }
     }
-  </script>  
+  </script>
 </head>
 <body>
   <h1>Commit Message Generator</h1>
-  <label for="projectPath">プロジェクトパス:</label>
-  <input type="text" id="projectPath" placeholder="/Users/shigoto/仕事/GitHub" />
+  <label for="projectSelect">プロジェクトを選択:</label>
+  <select id="projectSelect">
+    <option value="">プロジェクトを選択してください</option>
+  </select>
   <button onclick="generateCommitMessage()">Generate Commit Message</button>
   <button onclick="commitChanges()">コミットする</button>
   <h2>概要（Summary）:</h2>

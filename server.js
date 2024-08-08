@@ -2,6 +2,7 @@ import express from 'express';
 import OpenAI from 'openai';
 import { exec } from 'child_process';
 import dotenv from 'dotenv';
+import path from 'path';
 
 dotenv.config();
 
@@ -12,6 +13,8 @@ app.use(express.static('webapp-forserverjs'));
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
+
+const devDir = process.env.DEV_DIR || '/Users/shigoto/仕事/GitHub';
 
 async function getGitDiff(projectPath) {
   return new Promise((resolve, reject) => {
@@ -54,6 +57,8 @@ async function generateCommitMessage(diff) {
     // フォーマットが期待通りでない場合、応急処置として全体をサマリーにする
     summaryContent = message;
     console.error("Failed to find summary or description in the message. Using the entire message as the summary.");
+    // 全体をサマリーではなく、全体をディスクリプションにして、サマリーには「コミットメッセージは以下（Description）を参照とする方向に改修予定
+    // ログだけでなく、Web上にも、「フォーマットが期待通りでないため〜」と表示した方が良さそう
   }
 
   // 改行文字で分割してリスト項目を保持
@@ -61,6 +66,17 @@ async function generateCommitMessage(diff) {
 
   return { summary: summaryContent, description: descriptionLines.join('\n') };
 }
+
+app.get('/projects', (req, res) => {
+  exec(`ls -d ${devDir}/*/`, (error, stdout, stderr) => {
+    if (error) {
+      console.error(`エラー: ${stderr}`);
+      return res.status(500).json({ message: 'プロジェクト一覧の取得に失敗しました' });
+    }
+    const projects = stdout.split('\n').filter(Boolean).map(dir => path.basename(dir));
+    res.json({ projects });
+  });
+});
 
 app.post('/generate-commit-message', async (req, res) => {
   try {
