@@ -3,6 +3,7 @@ import OpenAI from 'openai';
 import { exec } from 'child_process';
 import dotenv from 'dotenv';
 import path from 'path';
+import { parseCommitMessage } from './parseMessage.js'; // 新しい関数のimport
 
 dotenv.config();
 
@@ -43,28 +44,9 @@ async function generateCommitMessage(diff) {
   const message = response.choices[0].message.content.trim();
   console.log('Generated Message:', message);
 
-  const summaryIndex = message.indexOf("### 概要（Summary）");
-  const descriptionIndex = message.indexOf("### 詳細（Description）");
+  const { summary, description } = parseCommitMessage(message);
 
-  let summaryContent = "";
-  let descriptionContent = "";
-
-  if (summaryIndex !== -1 && descriptionIndex !== -1) {
-    // フォーマットが期待通りの場合
-    summaryContent = message.slice(summaryIndex + "### 概要（Summary）".length, descriptionIndex).trim();
-    descriptionContent = message.slice(descriptionIndex + "### 詳細（Description）".length).trim();
-  } else {
-    // フォーマットが期待通りでない場合、応急処置として全体をサマリーにする
-    summaryContent = message;
-    console.error("Failed to find summary or description in the message. Using the entire message as the summary.");
-    // 全体をサマリーではなく、全体をディスクリプションにして、サマリーには「コミットメッセージは以下（Description）を参照とする方向に改修予定
-    // ログだけでなく、Web上にも、「フォーマットが期待通りでないため〜」と表示した方が良さそう
-  }
-
-  // 改行文字で分割してリスト項目を保持
-  const descriptionLines = descriptionContent.split('\n').map(line => line.trim());
-
-  return { summary: summaryContent, description: descriptionLines.join('\n') };
+  return { summary, description };
 }
 
 app.get('/projects', (req, res) => {
