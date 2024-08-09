@@ -9,8 +9,9 @@ const PORT = 3000;
 app.use(express.json());
 app.use(express.static('webapp-pushbutton'));
 
+const projectsDir = '/Users/shigoto/仕事/GitHub';
+
 app.get('/projects', (req, res) => {
-    const projectsDir = '/Users/shigoto/仕事/GitHub';
     exec(`ls ${projectsDir}`, (error, stdout, stderr) => {
         if (error) {
             console.error(`Error listing projects: ${stderr}`);
@@ -27,7 +28,14 @@ app.post('/push', (req, res) => {
         return res.status(400).json({ error: 'プロジェクトパスが指定されていません。' });
     }
 
-    const pushCommand = `cd ${projectPath} && git push`;
+    const fullProjectPath = path.join(projectsDir, projectPath);
+    // const pushCommand = `cd ${fullProjectPath} && git push`;
+    // 現在のブランチ名を取得して、アップストリームを設定するコマンドを組み立てる
+    const pushCommand = `
+        cd ${fullProjectPath} &&
+        current_branch=$(git rev-parse --abbrev-ref HEAD) &&
+        git push || git push --set-upstream origin $current_branch
+    `;
 
     exec(pushCommand, (error, stdout, stderr) => {
         if (error) {
