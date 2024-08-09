@@ -2,6 +2,8 @@ import express from 'express';
 import OpenAI from 'openai';
 import { exec } from 'child_process';
 import dotenv from 'dotenv';
+import path from 'path';
+import { parseCommitMessage } from './parseMessage.js'; // 新しい関数のimport
 
 dotenv.config();
 
@@ -13,9 +15,11 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-async function getGitDiff() {
+const devDir = process.env.DEV_DIR || '/Users/shigoto/仕事/GitHub';
+
+async function getGitDiff(projectPath) {
   return new Promise((resolve, reject) => {
-    exec('git diff --cached', (error, stdout) => {
+    exec(`git -C ${projectPath} diff --cached`, (error, stdout) => {
       if (error) {
         return reject(error);
       }
@@ -40,32 +44,27 @@ async function generateCommitMessage(diff) {
   const message = response.choices[0].message.content.trim();
   console.log('Generated Message:', message);
 
-  // "### 概要（Summary）" と "### 詳細（Description）" で分割する
-  const summaryIndex = message.indexOf("### 概要（Summary）");
-  const descriptionIndex = message.indexOf("### 詳細（Description）");
+  const { summary, description } = parseCommitMessage(message);
 
-  let summaryContent = "";
-  let descriptionContent = "";
-
-  if (summaryIndex !== -1 && descriptionIndex !== -1) {
-    // フォーマットが期待通りの場合
-    summaryContent = message.slice(summaryIndex + "### 概要（Summary）".length, descriptionIndex).trim();
-    descriptionContent = message.slice(descriptionIndex + "### 詳細（Description）".length).trim();
-  } else {
-    // フォーマットが期待通りでない場合、応急処置として全体をサマリーにする
-    summaryContent = message;
-    console.error("Failed to find summary or description in the message. Using the entire message as the summary.");
-  }
-
-  // 改行文字で分割してリスト項目を保持
-  const descriptionLines = descriptionContent.split('\n').map(line => line.trim());
-
-  return { summary: summaryContent, description: descriptionLines.join('\n') };
+  return { summary, description };
 }
+
+app.get('/projects', (req, res) => {
+  exec(`ls -d ${devDir}/*/`, (error, stdout, stderr) => {
+    if (error) {
+      console.error(`エラー: ${stderr}`);
+      return res.status(500).json({ message: 'プロジェクト一覧の取得に失敗しました' });
+    }
+    const projects = stdout.split('\n').filter(Boolean).map(dir => path.basename(dir));
+    res.json({ projects });
+  });
+});
 
 app.post('/generate-commit-message', async (req, res) => {
   try {
-    const diff = await getGitDiff();
+    const { projectPath } = req.body;
+    const fullProjectPath = path.join(devDir, projectPath);
+    const diff = await getGitDiff(fullProjectPath);
     if (!diff) {
       return res.status(400).json({ error: 'ステージングエリアに変更がありません。' });
     }
@@ -79,10 +78,11 @@ app.post('/generate-commit-message', async (req, res) => {
 
 app.post('/commit-changes', async (req, res) => {
   try {
-    const { summary, description } = req.body;
+    const { projectPath, summary, description } = req.body;
+    const fullProjectPath = path.join(devDir, projectPath);
 
     const commitMessage = `${summary}\n\n${description}`;
-    exec(`git commit -m "${commitMessage}"`, (error, stdout, stderr) => {
+    exec(`git -C ${fullProjectPath} commit -m "${commitMessage}"`, (error, stdout, stderr) => {
       if (error) {
         return res.status(500).json({ error: `コミットエラー: ${stderr}` });
       }
