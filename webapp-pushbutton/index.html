@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Git Push Manager</title>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      // プロジェクト一覧を取得してプルダウンメニューを作成
+      const projectSelect = document.getElementById('projectSelect');
+      const response = await fetch('/projects');
+      const data = await response.json();
+      data.projects.forEach(project => {
+        const option = document.createElement('option');
+        option.value = project;
+        option.textContent = project;
+        projectSelect.appendChild(option);
+      });
+    });
+
+    async function pushNowBranch() {
+      const projectPath = document.getElementById('projectSelect').value.trim();
+      if (!projectPath) {
+        alert('プロジェクトを選択してください');
+        return;
+      }
+
+      try {
+        const response = await fetch('/push', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ projectPath })
+        });
+        const data = await response.json();
+        if (response.ok) {
+          alert(data.message);
+        } else {
+          alert('エラー: ' + data.error);
+        }
+      } catch (error) {
+        alert('エラーが発生しました: ' + error.message);
+      }
+    }
+  </script>
+</head>
+<body>
+  <h1>Commit Message Generator & Git Project Managerのアプリの最下部に統合予定</h1>
+  <label for="projectSelect">プロジェクトを選択:</label>
+  <select id="projectSelect">
+    <option value="">プロジェクトを選択してください</option>
+  </select>
+  <button onclick="pushNowBranch()">プッシュする</button>
+</body>
+</html>
