@@ -3,7 +3,9 @@ import OpenAI from 'openai';
 import { exec } from 'child_process';
 import dotenv from 'dotenv';
 import path from 'path';
-import { parseCommitMessage } from './parseMessage.js'; // 新しい関数のimport
+import { parseCommitMessage } from './parseMessage.js'; // 部品のimport
+import { getProjects, getStatus, stageFiles } from './gitUtils.js'; // 部品のimport
+import { commitMessagePrompt } from './prompts.js'; // 部品のimport
 
 dotenv.config();
 
@@ -29,7 +31,7 @@ async function getGitDiff(projectPath) {
 }
 
 async function generateCommitMessage(diff) {
-  const prompt = `以下の変更内容に基づいて、Gitのコミットメッセージを日本語で生成してください。\n\n変更内容:\n${diff}\n\n### 概要（Summary）\n以下に概要を記載してください:\n### 詳細（Description）\n以下に詳細を記載してください:`;
+  const prompt = commitMessagePrompt(diff);
   const response = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
     messages: [
@@ -49,15 +51,38 @@ async function generateCommitMessage(diff) {
   return { summary, description };
 }
 
-app.get('/projects', (req, res) => {
-  exec(`ls -d ${devDir}/*/`, (error, stdout, stderr) => {
-    if (error) {
-      console.error(`エラー: ${stderr}`);
-      return res.status(500).json({ message: 'プロジェクト一覧の取得に失敗しました' });
-    }
-    const projects = stdout.split('\n').filter(Boolean).map(dir => path.basename(dir));
+// 統合したエンドポイント
+app.get('/projects', async (req, res) => {
+  try {
+    const projects = await getProjects();
     res.json({ projects });
-  });
+  } catch (error) {
+    res.status(500).json({ message: 'プロジェクト一覧の取得に失敗しました' });
+  }
+});
+
+app.get('/status/:project', async (req, res) => {
+  const project = req.params.project;
+  const projectPath = path.join(devDir, project);
+
+  try {
+    const statusList = await getStatus(projectPath);
+    res.json({ statusList });
+  } catch (error) {
+    res.status(500).json({ message: 'git statusの取得に失敗しました' });
+  }
+});
+
+app.post('/stage', async (req, res) => {
+  const { project, filePaths } = req.body;
+  const projectPath = path.join(devDir, project);
+
+  try {
+    const message = await stageFiles(projectPath, filePaths);
+    res.json({ message });
+  } catch (error) {
+    res.status(500).json({ message: 'ステージングに失敗しました' });
+  }
 });
 
 app.post('/generate-commit-message', async (req, res) => {
