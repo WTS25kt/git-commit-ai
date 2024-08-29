@@ -1,3 +1,6 @@
+- DBの接続が失敗する場合は、 [Qiita](https://qiita.com/workTimeShorterning/private/1d5cf6338d79812658a7) の記事を参照
+- 手順書作成は、2回目のテスト実施時に行う。そのため、テストは2回実施。1回目のテストでつまづいた点は、上記のようにまとめる。
+
 # Terminal　App(gpt3-commit.js)
 ## Usage
 ### 事前確認

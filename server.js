@@ -6,6 +6,7 @@ import path from 'path';
 import { parseCommitMessage } from './parseMessage.js'; // 部品のimport
 import { getProjects, getStatus, stageFiles } from './gitUtils.js'; // 部品のimport
 import { commitMessagePrompt } from './prompts.js'; // 部品のimport
+import mysql from 'mysql2/promise';
 
 dotenv.config();
 
@@ -43,12 +44,33 @@ async function generateCommitMessage(diff) {
 
   console.log('API Response:', response);
 
+      // データをMySQLに保存
+      await saveDataToDB(prompt, response);
+
   const message = response.choices[0].message.content.trim();
   console.log('Generated Message:', message);
 
   const { summary, description } = parseCommitMessage(message);
 
   return { summary, description };
+}
+
+async function saveDataToDB(input, output) {
+  const connection = await mysql.createConnection({
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+  });
+
+  try {
+    const query = 'INSERT INTO openai_requests (input_text, output_text) VALUES (?, ?)';
+    await connection.execute(query, [input, output]);
+  } catch (error) {
+    console.error('Error saving data to MySQL:', error);
+  } finally {
+    await connection.end();
+  }
 }
 
 // 統合したエンドポイント
