@@ -1,9 +1,13 @@
+# 備忘録
 - DBの接続が失敗する場合は、 [Qiita](https://qiita.com/workTimeShorterning/private/1d5cf6338d79812658a7) の記事を参照
 - 手順書作成は、2回目のテスト実施時に行う。そのため、テストは2回実施。1回目のテストでつまづいた点は、上記のようにまとめる。
-# 手順
+## 手順
 - mysql.server start
 - node server.js
 - [開く](http://localhost:3000/) の記事を参照
+## ブランチでのアプリバージョンを分かりやすく管理
+- iOSなどのアプリでは、バージョンの管理をver_1.0.1とかver_2.1.2とかで管理していて分かりやすい
+- そのため、Gitでブランチ作る時も、"version101/feauture/homepage-add"のように先頭にバージョンを入れておくと良いと思った
 
 # Terminal　App(gpt3-commit.js)
 ## Usage
