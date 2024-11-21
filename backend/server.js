@@ -3,22 +3,22 @@ import OpenAI from 'openai';
 import { exec } from 'child_process';
 import dotenv from 'dotenv';
 import path from 'path';
-import { parseCommitMessage } from './parseMessage.js'; // 部品のimport
-import { getProjects, getStatus, stageFiles } from './gitUtils.js'; // 部品のimport
-import { commitMessagePrompt } from './prompts.js'; // 部品のimport
+import { parseCommitMessage } from './utils/parseMessage.js'; // 部品のimport
+import { getProjects, getStatus, stageFiles } from './utils/gitUtils.js'; // 部品のimport
+import { commitMessagePrompt } from './utils/prompts.js'; // 部品のimport
 import mysql from 'mysql2/promise';
 
 dotenv.config();
 
 const app = express();
 app.use(express.json());
-app.use(express.static('webapp-forserverjs'));
+app.use(express.static('../frontend/webapp-forserverjs'));
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const devDir = process.env.DEV_DIR || '/Users/shigoto/仕事/GitHub';
+const devDir = process.env.DEV_DIR || '/Users/shigoto/仕事/GitHub/backend';
 
 async function getGitDiff(projectPath) {
   return new Promise((resolve, reject) => {
