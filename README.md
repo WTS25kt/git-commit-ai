@@ -9,6 +9,8 @@
 ## ブランチでのアプリバージョンを分かりやすく管理
 - iOSなどのアプリでは、バージョンの管理をver_1.0.1とかver_2.1.2とかで管理していて分かりやすい
 - そのため、Gitでブランチ作る時も、"version101/feauture/homepage-add"のように先頭にバージョンを入れておくと良いと思った
+## version101/feauture/backquoete-delete
+` バッククォート3つの行を削除する機能を追加したい
 
 # Terminal　App(gpt3-commit.js)
 ## Usage
